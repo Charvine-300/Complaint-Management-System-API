@@ -1,0 +1,6 @@
+@ZenlyAPI_HostAddress = http://localhost:5196
+
+GET {{ZenlyAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
