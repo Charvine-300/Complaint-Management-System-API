@@ -18,7 +18,7 @@ namespace ZenlyAPI.Extensions
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlfile);
                 option.IncludeXmlComments(xmlPath);
 
-                option.SwaggerDoc("v1", new OpenApiInfo { Title = $"FIP Partner Portal - {environmentName}", Version = "v2" });
+                option.SwaggerDoc("v1", new OpenApiInfo { Title = $"Zenly - {environmentName}", Version = "v1" });
                 option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     In = ParameterLocation.Header,

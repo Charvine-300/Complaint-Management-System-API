@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ZenlyAPI.Context;
 
@@ -11,9 +12,11 @@ using ZenlyAPI.Context;
 namespace ZenlyAPI.Migrations
 {
     [DbContext(typeof(ZenlyDbContext))]
-    partial class ZenlyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260414110624_Course_Entity_Update")]
+    partial class Course_Entity_Update
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -47,7 +50,7 @@ namespace ZenlyAPI.Migrations
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<Guid?>("DepartmentId")
+                    b.Property<Guid>("DepartmentId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset?>("ModifiedAt")
@@ -88,7 +91,7 @@ namespace ZenlyAPI.Migrations
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<Guid?>("FacultyId")
+                    b.Property<Guid>("FacultyId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset?>("ModifiedAt")
@@ -96,6 +99,9 @@ namespace ZenlyAPI.Migrations
 
                     b.Property<string>("ModifiedBy")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("MyProperty")
+                        .HasColumnType("int");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -146,7 +152,8 @@ namespace ZenlyAPI.Migrations
                     b.HasOne("ZenlyAPI.Domain.Entities.Department", "Department")
                         .WithMany("Courses")
                         .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Department");
                 });
@@ -156,7 +163,8 @@ namespace ZenlyAPI.Migrations
                     b.HasOne("ZenlyAPI.Domain.Entities.Faculty", "Faculty")
                         .WithMany("Departments")
                         .HasForeignKey("FacultyId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Faculty");
                 });

@@ -6,8 +6,9 @@ public class Course: BaseEntity
 {
     public string Name { get; set; }
     public string Code { get; set; }
-    public Guid DepartmentId { get; set; }
-    public virtual Department Department { get; set; }
+    public CourseType Type { get; set; } 
+    public Guid? DepartmentId { get; set; }
+    public virtual Department? Department { get; set; }
 
     // TODO : Add Complaint's nav property (O-to-M)
     // TODO : Add Lecturer's nav property (M-to-M) - Create Associative Property

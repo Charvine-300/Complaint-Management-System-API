@@ -4,6 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using ZenlyAPI.Context;
 using ZenlyAPI.Domain.Config;
+using ZenlyAPI.Services.CourseMgmt;
+using ZenlyAPI.Services.DepartmentMgmt;
+using ZenlyAPI.Services.FacultyMgmt;
 
 namespace ZenlyAPI.Extensions
 {
@@ -18,6 +21,9 @@ namespace ZenlyAPI.Extensions
             services.AddHttpContextAccessor();
             services.AddHttpClient();
 
+            services.AddScoped<ICourseMgmtService, CourseMgmtService>();
+            services.AddScoped<IFacultyMgmtService, FacultyMgmtService>();
+            services.AddScoped<IDepartmentMgmtService, DepartmentMgmtService>();
 
             services.AddScoped<IMemoryCache, MemoryCache>();
         }
