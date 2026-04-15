@@ -1,4 +1,5 @@
-﻿using ZenlyAPI.Services.DepartmentMgmt;
+﻿using ZenlyAPI.Domain.Utilities;
+using ZenlyAPI.Services.DepartmentMgmt;
 
 namespace ZenlyAPI.Services.FacultyMgmt;
 
@@ -9,6 +10,7 @@ public record FacultyDetailsResponse(Guid Id, string Name, List<AllDepartmentsRe
 
 public class  FacultyMgmtRequest 
 {
+    [StartsWith("Faculty of")]
     public string Name { get; set; }
 }
 

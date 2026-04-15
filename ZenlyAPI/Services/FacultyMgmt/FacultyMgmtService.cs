@@ -155,16 +155,24 @@ public class FacultyMgmtService(ZenlyDbContext database) : IFacultyMgmtService
 
     public async Task<ServiceResponse> DeleteFacultyAsync(Guid id, CancellationToken cancellationToken)
     {
-        Faculty? faculty = await database.Faculties.FirstOrDefaultAsync(f => f.Id == id, cancellationToken);
-
-        if (faculty == null)
+        try
         {
-            return Response.NotFound("This faculty does not exist");
+            Faculty? faculty = await database.Faculties.FirstOrDefaultAsync(f => f.Id == id, cancellationToken);
+
+            if (faculty == null)
+            {
+                return Response.NotFound("This faculty does not exist");
+            }
+
+            database.Faculties.Remove(faculty);
+            await database.SaveChangesAsync(cancellationToken);
+
+            return Response.Success("Faculty deleted successfully");
         }
-
-        database.Faculties.Remove(faculty);
-        await database.SaveChangesAsync(cancellationToken);
-
-        return Response.Success("Faculty deleted successfully");
+        catch (Exception ex)
+        {
+            Log.Logger.Error(ex, "An error occurred while deleting faculty");
+            return Response.SystemMalfunction("An error occurred while processing your request. Please try again later.");
+        }
     }
 }

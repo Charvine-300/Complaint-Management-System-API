@@ -64,6 +64,8 @@ public class FacultiesController(IFacultyMgmtService facultyMgmtService) : BaseC
     [ProducesResponseType(404, Type = typeof(ApiResponse))]
     public async Task<IActionResult> CreateFaculty(FacultyMgmtRequest payload, CancellationToken cancellationToken)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
         ServiceResponse response = await facultyMgmtService.CreateFacultyAsync(payload, cancellationToken);
         return ComputeResponse(response);
     }
@@ -82,6 +84,8 @@ public class FacultiesController(IFacultyMgmtService facultyMgmtService) : BaseC
     [ProducesResponseType(404, Type = typeof(ApiResponse))]
     public async Task<IActionResult> UpdateFaculty(Guid id, FacultyMgmtRequest payload, CancellationToken cancellationToken)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
         ServiceResponse response = await facultyMgmtService.UpdateFacultyAsync(id, payload, cancellationToken);
         return ComputeResponse(response);
     }
