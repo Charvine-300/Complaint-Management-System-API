@@ -11,6 +11,7 @@ public record AllDepartmentsResponse(
 public record DepartmentDetailsResponse(
     Guid Id,
     string Name,
+    string Faculty, 
     List<AllCoursesResponse> Courses
 );
 

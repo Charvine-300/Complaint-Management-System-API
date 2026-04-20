@@ -9,6 +9,7 @@ public class Course: BaseEntity
     public CourseType Type { get; set; } 
     public Guid? DepartmentId { get; set; }
     public virtual Department? Department { get; set; }
+    public bool IsActive { get; set; } = true;
 
     // TODO : Add Complaint's nav property (O-to-M)
     // TODO : Add Lecturer's nav property (M-to-M) - Create Associative Property

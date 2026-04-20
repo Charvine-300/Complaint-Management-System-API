@@ -75,12 +75,14 @@ public class DepartmentMgmtService(ZenlyDbContext database) : IDepartmentMgmtSer
         (
             department.Id,
             department.Name,
+            department.Faculty.Name ?? "N/A",
             department.Courses.Select(c => new AllCoursesResponse
             (
                 c.Id,
                 c.Code,
                 c.Name,
-                c.Type.ToString()
+                c.Type.ToString(),
+                c.IsActive
             )).ToList()
         );
 
