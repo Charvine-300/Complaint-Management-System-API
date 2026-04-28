@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ZenlyAPI.Context;
 
@@ -11,9 +12,11 @@ using ZenlyAPI.Context;
 namespace ZenlyAPI.Migrations
 {
     [DbContext(typeof(ZenlyDbContext))]
-    partial class ZenlyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260424190917_Updated_DbContext")]
+    partial class Updated_DbContext
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -31,8 +34,9 @@ namespace ZenlyAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("ComplaintType")
-                        .HasColumnType("int");
+                    b.Property<string>("ComplaintType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("CourseId")
                         .HasColumnType("uniqueidentifier");
@@ -69,7 +73,7 @@ namespace ZenlyAPI.Migrations
 
                     b.HasIndex("CourseId");
 
-                    b.ToTable("Complaints", (string)null);
+                    b.ToTable("Complaints");
                 });
 
             modelBuilder.Entity("ZenlyAPI.Domain.Entities.Complaints.ComplaintsTrail", b =>
@@ -81,11 +85,6 @@ namespace ZenlyAPI.Migrations
                     b.Property<string>("Action")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ActionType")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(4);
 
                     b.Property<string>("Actor")
                         .HasColumnType("nvarchar(max)");
@@ -118,7 +117,7 @@ namespace ZenlyAPI.Migrations
 
                     b.HasIndex("ComplaintId");
 
-                    b.ToTable("ComplaintsTrail", (string)null);
+                    b.ToTable("ComplaintsTrail");
                 });
 
             modelBuilder.Entity("ZenlyAPI.Domain.Entities.Course", b =>
@@ -172,7 +171,7 @@ namespace ZenlyAPI.Migrations
 
                     b.HasIndex("DepartmentId");
 
-                    b.ToTable("Courses", (string)null);
+                    b.ToTable("Courses");
                 });
 
             modelBuilder.Entity("ZenlyAPI.Domain.Entities.Department", b =>
@@ -210,7 +209,7 @@ namespace ZenlyAPI.Migrations
 
                     b.HasIndex("FacultyId");
 
-                    b.ToTable("Departments", (string)null);
+                    b.ToTable("Departments");
                 });
 
             modelBuilder.Entity("ZenlyAPI.Domain.Entities.Faculty", b =>
@@ -243,7 +242,7 @@ namespace ZenlyAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Faculties", (string)null);
+                    b.ToTable("Faculties");
                 });
 
             modelBuilder.Entity("ZenlyAPI.Domain.Entities.Complaints.Complaint", b =>

@@ -4,7 +4,7 @@ using ZenlyAPI.Domain.Utilities;
 namespace ZenlyAPI.Services.CourseMgmt;
 
 public record AllCoursesResponse(Guid Id, string Code, string Name, string Type, bool IsActive);
-public record CourseDetailsResponse(Guid Id, string Code, string Name, string Type, bool IsActive, string Department, string Faculty);
+public record CourseDetailsResponse(Guid Id, string Code, string Name, string Type, int? Year, string? Semester, bool IsActive, string Department, string Faculty);
 
 public class CourseMgmtRequest
 {

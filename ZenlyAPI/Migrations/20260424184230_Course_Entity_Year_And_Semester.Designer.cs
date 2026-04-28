@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ZenlyAPI.Context;
 
@@ -11,9 +12,11 @@ using ZenlyAPI.Context;
 namespace ZenlyAPI.Migrations
 {
     [DbContext(typeof(ZenlyDbContext))]
-    partial class ZenlyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260424184230_Course_Entity_Year_And_Semester")]
+    partial class Course_Entity_Year_And_Semester
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -24,102 +27,6 @@ namespace ZenlyAPI.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("ZenlyAPI.Domain.Entities.Complaints.Complaint", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("ComplaintType")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("CourseId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("Deleted")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("ModifiedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("ModifiedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CourseId");
-
-                    b.ToTable("Complaints", (string)null);
-                });
-
-            modelBuilder.Entity("ZenlyAPI.Domain.Entities.Complaints.ComplaintsTrail", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Action")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ActionType")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(4);
-
-                    b.Property<string>("Actor")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Comment")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("ComplaintId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("Deleted")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateTimeOffset?>("ModifiedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("ModifiedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ComplaintId");
-
-                    b.ToTable("ComplaintsTrail", (string)null);
-                });
 
             modelBuilder.Entity("ZenlyAPI.Domain.Entities.Course", b =>
                 {
@@ -172,7 +79,7 @@ namespace ZenlyAPI.Migrations
 
                     b.HasIndex("DepartmentId");
 
-                    b.ToTable("Courses", (string)null);
+                    b.ToTable("Courses");
                 });
 
             modelBuilder.Entity("ZenlyAPI.Domain.Entities.Department", b =>
@@ -210,7 +117,7 @@ namespace ZenlyAPI.Migrations
 
                     b.HasIndex("FacultyId");
 
-                    b.ToTable("Departments", (string)null);
+                    b.ToTable("Departments");
                 });
 
             modelBuilder.Entity("ZenlyAPI.Domain.Entities.Faculty", b =>
@@ -243,29 +150,7 @@ namespace ZenlyAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Faculties", (string)null);
-                });
-
-            modelBuilder.Entity("ZenlyAPI.Domain.Entities.Complaints.Complaint", b =>
-                {
-                    b.HasOne("ZenlyAPI.Domain.Entities.Course", "Course")
-                        .WithMany()
-                        .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Course");
-                });
-
-            modelBuilder.Entity("ZenlyAPI.Domain.Entities.Complaints.ComplaintsTrail", b =>
-                {
-                    b.HasOne("ZenlyAPI.Domain.Entities.Complaints.Complaint", "Complaint")
-                        .WithMany("History")
-                        .HasForeignKey("ComplaintId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Complaint");
+                    b.ToTable("Faculties");
                 });
 
             modelBuilder.Entity("ZenlyAPI.Domain.Entities.Course", b =>
@@ -286,11 +171,6 @@ namespace ZenlyAPI.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Faculty");
-                });
-
-            modelBuilder.Entity("ZenlyAPI.Domain.Entities.Complaints.Complaint", b =>
-                {
-                    b.Navigation("History");
                 });
 
             modelBuilder.Entity("ZenlyAPI.Domain.Entities.Department", b =>

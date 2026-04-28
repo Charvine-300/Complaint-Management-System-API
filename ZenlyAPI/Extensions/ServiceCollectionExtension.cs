@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using ZenlyAPI.Context;
 using ZenlyAPI.Domain.Config;
+using ZenlyAPI.Services.ComplaintsMgmt;
+using ZenlyAPI.Services.ComplaintsTrailMgmt;
 using ZenlyAPI.Services.CourseMgmt;
 using ZenlyAPI.Services.DepartmentMgmt;
 using ZenlyAPI.Services.FacultyMgmt;
@@ -24,6 +26,8 @@ namespace ZenlyAPI.Extensions
             services.AddScoped<ICourseMgmtService, CourseMgmtService>();
             services.AddScoped<IFacultyMgmtService, FacultyMgmtService>();
             services.AddScoped<IDepartmentMgmtService, DepartmentMgmtService>();
+            services.AddScoped<IComplaintsService, ComplaintsService>();
+            services.AddScoped<IComplaintsTrailService,  ComplaintsTrailService>();
 
             services.AddScoped<IMemoryCache, MemoryCache>();
         }

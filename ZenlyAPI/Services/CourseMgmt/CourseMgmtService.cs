@@ -97,6 +97,8 @@ public class CourseMgmtService(ZenlyDbContext database) : ICourseMgmtService
                 Name: course.Name,
                 Code: course.Code,
                 Type: course.Type.ToString(),
+                Year: course.Year,
+                Semester: course.Semester?.ToString() ?? "N/A",
                 IsActive: course.IsActive,
                 Department: course.Department?.Name ?? "N/A",
                 Faculty: course.Department?.Faculty?.Name ?? "N/A"
