@@ -29,6 +29,7 @@ public enum ComplaintType
 
 public enum ComplaintActionType
 {
+    Unknown = 0,
     Create = 1,
     Update = 2,
     Delete = 3,

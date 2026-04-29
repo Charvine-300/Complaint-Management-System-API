@@ -11,9 +11,9 @@ public class Complaint: BaseEntity
     public Guid CourseId { get; set; }
     public ComplaintStatus Status { get; set; }
     public virtual ICollection<ComplaintsTrail> History { get; set; } = new List<ComplaintsTrail>();
+    public virtual ICollection<ComplaintUpload> Documents { get; set; } = new List<ComplaintUpload>();
 
     // TODO : Add Course's nav property (M-to-1)
     // TODO : Add Student's nav property (M-to-1)
-    // TODO : Add Document/File uploads property (TBD)
     // TODO : Add Complaint Communication btw Student and Lecturer
 }

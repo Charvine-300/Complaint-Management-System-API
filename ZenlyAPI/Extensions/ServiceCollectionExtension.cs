@@ -98,7 +98,7 @@ namespace ZenlyAPI.Extensions
         }
 
         /// <summary>
-        /// Binds the configuration file to the CreditCardConfig class which has the same section names and structure with the CreditCardConfig section in the configuration file.
+        /// Binds the configuration file to the ZenlyConfig class which has the same section names and structure with the ZenlyConfig section in the configuration file.
         /// </summary>
         /// <param name="services"></param>
         /// <param name="configuration"></param>

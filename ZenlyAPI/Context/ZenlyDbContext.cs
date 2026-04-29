@@ -15,6 +15,7 @@ public class ZenlyDbContext(DbContextOptions<ZenlyDbContext> options, ZenlyConfi
     public DbSet<Faculty> Faculties { get; set; }
     public DbSet<Complaint> Complaints { get; set; }    
     public DbSet<ComplaintsTrail> ComplaintsTrail { get; set; }
+    public DbSet<ComplaintUpload> ComplaintUploads { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -34,6 +35,12 @@ public class ZenlyDbContext(DbContextOptions<ZenlyDbContext> options, ZenlyConfi
 
         modelBuilder.Entity<Complaint>()
             .HasMany(c => c.History)
+            .WithOne(h => h.Complaint)
+            .HasForeignKey(h => h.ComplaintId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Complaint>()
+            .HasMany(u => u.Documents)
             .WithOne(h => h.Complaint)
             .HasForeignKey(h => h.ComplaintId)
             .OnDelete(DeleteBehavior.Cascade);

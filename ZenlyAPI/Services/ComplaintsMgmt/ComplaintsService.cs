@@ -1,6 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using ZenlyAPI.Context;
+using ZenlyAPI.Domain.Config;
 using ZenlyAPI.Domain.Entities;
 using ZenlyAPI.Domain.Entities.Complaints;
 using ZenlyAPI.Domain.Entities.Shared;
@@ -10,8 +13,18 @@ using ZenlyAPI.Services.Shared;
 
 namespace ZenlyAPI.Services.ComplaintsMgmt;
 
-public class ComplaintsService(ZenlyDbContext database, IComplaintsTrailService trailService): IComplaintsService
+public class ComplaintsService(ZenlyDbContext database, IComplaintsTrailService trailService, ZenlyConfig zenlyConfig, IConfiguration configuration): IComplaintsService
 {
+    private readonly Cloudinary _cloudinary =
+      new Cloudinary(
+          new Account(
+              zenlyConfig.CloudinaryConfig.CloudName,
+              zenlyConfig.CloudinaryConfig.ApiKey,
+              zenlyConfig.CloudinaryConfig.ApiSecret
+          )
+      );
+
+
     public async Task<ServiceResponse<PaginationResponse<AllComplaintsResponse>>> GetAllComplaintsAsync(ComplaintsParameters parameters, CancellationToken cancellationToken)
     {
         try
@@ -95,6 +108,7 @@ public class ComplaintsService(ZenlyDbContext database, IComplaintsTrailService 
         {
             Complaint? complaintDetails = await database.Complaints.Include(c => c.Course)
                 .Include(c => c.History)
+                .Include(c => c.Documents)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == id);
 
@@ -113,6 +127,11 @@ public class ComplaintsService(ZenlyDbContext database, IComplaintsTrailService 
                     complaintDetails.Status.ToString(),
                     complaintDetails.Course.Code + " - " + complaintDetails.Course.Name,
                     complaintDetails.CreatedAt,
+                    complaintDetails.Documents.OrderByDescending(d => d.CreatedAt).Select(d => new ComplaintUploadsResponse
+                    (
+                        d.Id,
+                        d.ImageUrl
+                    )).ToList(),
                     complaintDetails.History.OrderBy(t => t.CreatedAt).Select(h => new ComplaintsTrailResponse
                     (
                         h.Id,
@@ -158,7 +177,22 @@ public class ComplaintsService(ZenlyDbContext database, IComplaintsTrailService 
             };
 
 
-            database.Complaints.Add(logComplaint);
+            // Uploading probable images related to this complaint and getting their URLs
+            if (request.Uploads != null && request.Uploads.Count > 0)
+            {
+                List<ComplaintUpload> uploadedPhotos = await UploadPhotoAsync(new ImageCreationDTO
+                {
+                    ComplaintId = logComplaint.Id,
+                    CourseCode = courseDetails.Code,
+                    Uploads = request.Uploads
+                });
+
+                logComplaint.Documents = uploadedPhotos;
+            }
+
+
+            await database.Complaints.AddAsync(logComplaint, cancellationToken);
+            await database.ComplaintUploads.AddRangeAsync(logComplaint.Documents, cancellationToken);
             await database.SaveChangesAsync(cancellationToken);
 
             // Record complaint hsitory
@@ -310,5 +344,43 @@ public class ComplaintsService(ZenlyDbContext database, IComplaintsTrailService 
         await database.SaveChangesAsync(cancellationToken);
 
         return Response.Success("Complaint deleted successfully");
+    }
+
+    private async Task<List<ComplaintUpload>> UploadPhotoAsync(ImageCreationDTO imgDetails)
+    {
+        var uploads = new List<ComplaintUpload>();
+
+        foreach (var file in imgDetails.Uploads)
+        {
+            var uploadResult = new ImageUploadResult();
+
+            if (file.Length > 0)
+            {
+                using (var stream = file.OpenReadStream())
+                {
+                    var uploadParams = new ImageUploadParams()
+                    {
+                        File = new FileDescription(file.Name, stream),
+                        Folder = $"Zenly/{imgDetails.CourseCode}"
+                    };
+
+                    uploadResult = _cloudinary.Upload(uploadParams);
+                }
+            }
+
+            var Url = uploadResult.Url.ToString();
+            var PublicId = uploadResult.PublicId;
+
+            uploads.Add(new ComplaintUpload
+            {
+                ImageUrl = Url,
+                PublicId = PublicId,
+                CreatedAt = DateTimeOffset.UtcNow,
+                ComplaintId = imgDetails.ComplaintId,
+            });
+
+        };
+
+        return uploads;
     }
 }

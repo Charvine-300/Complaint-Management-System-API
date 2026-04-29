@@ -58,7 +58,7 @@ public class ComplaintsController(IComplaintsService complaintsService) : BaseCo
     [ProducesResponseType(200, Type = typeof(ApiResponse))]
     [ProducesResponseType(400, Type = typeof(ApiResponse))]
     [ProducesResponseType(404, Type = typeof(ApiResponse))]
-    public async Task<IActionResult> LogComplaint([FromBody] ComplaintMgmtRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> LogComplaint([FromForm] ComplaintMgmtRequest request, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 

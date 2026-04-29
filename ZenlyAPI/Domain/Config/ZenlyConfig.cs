@@ -7,5 +7,6 @@
         public string ApiKey { get; set; } = default!;
         public SerilogConfig SerilogConfig { get; set; } = default!;
         public JwtConfig JwtConfig { get; set; } = default!;
+        public CloudinaryConfig CloudinaryConfig { get; set; } = default!;
     }
 }
