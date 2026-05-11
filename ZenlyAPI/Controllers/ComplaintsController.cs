@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ZenlyAPI.Controllers.Shared;
 using ZenlyAPI.Domain.Utilities;
 using ZenlyAPI.Services.ComplaintsMgmt;
@@ -7,7 +8,8 @@ namespace ZenlyAPI.Controllers;
 
 [ApiController]
 [Route("api/complaints")]
-//[Authorize]
+[Authorize]
+
 public class ComplaintsController(IComplaintsService complaintsService) : BaseController
 {
     /// <summary>

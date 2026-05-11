@@ -2,14 +2,13 @@
 using Microsoft.AspNetCore.Mvc;
 using ZenlyAPI.Controllers.Shared;
 using ZenlyAPI.Domain.Utilities;
-using ZenlyAPI.Domain.Validators.Attributes;
 using ZenlyAPI.Services.CourseMgmt;
 
 namespace ZenlyAPI.Controllers;
 
 [ApiController]
 [Route("api/courses")]
-//[Authorize]
+[Authorize]
 
 public class CoursesController(ICourseMgmtService courseMgmtService) : BaseController
 {

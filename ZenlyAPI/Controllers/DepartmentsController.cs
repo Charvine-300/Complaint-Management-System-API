@@ -1,15 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ZenlyAPI.Controllers.Shared;
 using ZenlyAPI.Domain.Utilities;
-using ZenlyAPI.Domain.Validators.Attributes;
-using ZenlyAPI.Services.CourseMgmt;
 using ZenlyAPI.Services.DepartmentMgmt;
 
 namespace ZenlyAPI.Controllers;
 
 [ApiController]
 [Route("api/departments")]
-//[Authorize]
+[Authorize]
 
 
 public class DepartmentsController(IDepartmentMgmtService departmentMgmtService) : BaseController

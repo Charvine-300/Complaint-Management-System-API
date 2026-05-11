@@ -1,14 +1,18 @@
-﻿using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using ZenlyAPI.Context;
 using ZenlyAPI.Domain.Config;
+using ZenlyAPI.Services.AuthMgmt;
 using ZenlyAPI.Services.ComplaintsMgmt;
 using ZenlyAPI.Services.ComplaintsTrailMgmt;
 using ZenlyAPI.Services.CourseMgmt;
 using ZenlyAPI.Services.DepartmentMgmt;
 using ZenlyAPI.Services.FacultyMgmt;
+using ZenlyAPI.Services.Shared.UserContextService;
 
 namespace ZenlyAPI.Extensions
 {
@@ -28,6 +32,9 @@ namespace ZenlyAPI.Extensions
             services.AddScoped<IDepartmentMgmtService, DepartmentMgmtService>();
             services.AddScoped<IComplaintsService, ComplaintsService>();
             services.AddScoped<IComplaintsTrailService,  ComplaintsTrailService>();
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IUserContextService,  UserContextService>();
+
 
             services.AddScoped<IMemoryCache, MemoryCache>();
         }
@@ -53,44 +60,34 @@ namespace ZenlyAPI.Extensions
         /// Register authentications with jwt.
         /// </summary>
         /// <param name="services"></param>
-        public static void RegisterAuthentication(this IServiceCollection services)
+        public static void RegisterAuthentication(this IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<DataProtectionTokenProviderOptions>(opt =>
                 opt.TokenLifespan = TimeSpan.FromHours(24));
 
             services.AddAuthentication(options =>
             {
-                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             })
-            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+            .AddJwtBearer(options =>
             {
+                var jwtKey = configuration["ZenlyConfig:JwtConfig:JwtKey"];
+                var issuer = configuration["ZenlyConfig:JwtConfig:JwtIssuer"];
+                var audience = configuration["ZenlyConfig:JwtConfig:JwtAudience"];
 
-                options.Cookie.HttpOnly = true;
-                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-                options.Cookie.SameSite = SameSiteMode.Strict;
-                options.Cookie.Name = "auth_cookie";
-                options.ExpireTimeSpan = TimeSpan.FromDays(7);
-                options.SlidingExpiration = true;
-
-
-                options.Events = new CookieAuthenticationEvents
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    OnValidatePrincipal = context =>
-                    {
-                        return Task.CompletedTask;
-                    },
-                    OnRedirectToLogin = context =>
-                    {
-                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                        return Task.CompletedTask;
-                    },
-                    OnRedirectToAccessDenied = context =>
-                    {
-                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                        return Task.CompletedTask;
-                    }
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+
+                    ValidIssuer = issuer,
+                    ValidAudience = audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(jwtKey!)
+                    )
                 };
             });
 

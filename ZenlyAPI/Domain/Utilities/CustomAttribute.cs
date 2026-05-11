@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 
 namespace ZenlyAPI.Domain.Utilities;
 
@@ -98,6 +99,36 @@ public class StartsWithAttribute : ValidationAttribute
             {
                 return new ValidationResult(
                     $"'{imgType}' is not a valid image type. Allowed values are: {string.Join(", ", AllowedTypes)}");
+            }
+
+            return ValidationResult.Success;
+        }
+    }
+
+    public class MatricNoAttribute : ValidationAttribute
+    {
+        private const string Pattern = @"^\d{9}$";
+
+        public MatricNoAttribute()
+        {
+            ErrorMessage = "MatricNo must be exactly 9 digits.";
+        }
+
+        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
+        {
+            if (value is null)
+            {
+                return new ValidationResult("MatricNo is required.");
+            }
+
+            if (value is not string matricNo)
+            {
+                return new ValidationResult("Invalid MatricNo format.");
+            }
+
+            if (!Regex.IsMatch(matricNo, Pattern))
+            {
+                return new ValidationResult(ErrorMessage);
             }
 
             return ValidationResult.Success;

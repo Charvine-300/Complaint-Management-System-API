@@ -1,10 +1,11 @@
 ﻿using Serilog;
 using ZenlyAPI.Context;
 using ZenlyAPI.Domain.Entities.Complaints;
+using ZenlyAPI.Services.Shared.UserContextService;
 
 namespace ZenlyAPI.Services.ComplaintsTrailMgmt;
 
-public class ComplaintsTrailService(ZenlyDbContext database) : IComplaintsTrailService
+public class ComplaintsTrailService(ZenlyDbContext database, IUserContextService userContextService) : IComplaintsTrailService
 {
     public async Task<bool> RecordComplaintActionAsync(ComplaintsTrailRequest log, CancellationToken cancellationToken)
     {
@@ -18,7 +19,7 @@ public class ComplaintsTrailService(ZenlyDbContext database) : IComplaintsTrailS
                 Actor = log.Actor,
                 ActionType = log.ActionType,
                 CreatedAt = DateTimeOffset.UtcNow,
-                //TODO - Add CreatedBy content here
+                CreatedBy = userContextService.User.Id,
             };
 
             await database.ComplaintsTrail.AddAsync(trail, cancellationToken);

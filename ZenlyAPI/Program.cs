@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Scalar.AspNetCore;
@@ -18,7 +16,7 @@ builder.ConfigureSerilog(zenlyConfig.SerilogConfig);
 builder.Services.RegisterDbContext(zenlyConfig.ConnectionString);
 builder.Services.RegisterServices();
 
-builder.Services.RegisterAuthentication();
+builder.Services.RegisterAuthentication(builder.Configuration);
 builder.Services.AddControllers(x =>
 {
     x.EnableEndpointRouting = false;
@@ -50,6 +48,21 @@ builder.Services.ConfigureSwagger(Assembly.GetExecutingAssembly().GetName().Name
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ZenlyCors", policy =>
+    {
+        policy
+            .WithOrigins(
+                "https://localhost:7086",
+                "http://localhost:3000",
+                "http://localhost:4200"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -70,16 +83,12 @@ app.UseRateLimiter();
 RouteGroupBuilder rateLimitedGroup = app.MapGroup("/api").RequireRateLimiting("fixed-by-ip");
 
 app.UseHttpsRedirection();
-app.UseCors(options =>
-{
-    options.WithOrigins(
-        "http://localhost:3000",
-        "http://localhost:4200");
-    options.AllowAnyHeader();
-    options.AllowAnyMethod();
-    options.AllowCredentials();
-});
 
+app.UseRouting();
+
+app.UseCors("ZenlyCors");
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

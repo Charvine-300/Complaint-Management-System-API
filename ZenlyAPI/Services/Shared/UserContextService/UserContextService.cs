@@ -1,5 +1,6 @@
 ﻿using Serilog;
 using System.Security.Claims;
+using ZenlyAPI.Domain.Entities.Shared;
 
 namespace ZenlyAPI.Services.Shared.UserContextService;
 
@@ -13,14 +14,22 @@ public class UserContextService(IHttpContextAccessor httpContextAccessor): IUser
 
         if (user == null || user.Identity == null || !user.Identity.IsAuthenticated)
         {
-            return new CurrentUser(default, default, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
+            return new CurrentUser(default, default, string.Empty, string.Empty, string.Empty);
         }
 
 
-        var secondaryIssuerId = user.FindFirst("secondaryIssuerId")?.Value ?? string.Empty;
-        var userId = user.FindFirst("userId")?.Value ?? string.Empty;
-        var roleId = user.FindFirst("roleId")?.Value ?? string.Empty;
-        var username = user.FindFirst("username")?.Value ?? string.Empty;
+        var userTypeClaim = user.FindFirst("userType")?.Value;
+
+        UserType userType = Enum.TryParse<UserType>(
+            userTypeClaim,
+            true,
+            out var parsedUserType
+        )
+            ? parsedUserType
+            : UserType.Student;
+        var userId = user.FindFirst("id")?.Value ?? string.Empty;
+        //var roleId = user.FindFirst("roleId")?.Value ?? string.Empty;
+        //var username = user.FindFirst("username")?.Value ?? string.Empty;
         var firstName = user.FindFirst("firstName")?.Value ?? string.Empty;
         var lastName = user.FindFirst("lastName")?.Value ?? string.Empty;
         var email = user.FindFirst(c => c.Type == ClaimTypes.Email)?.Value ?? string.Empty;
@@ -33,9 +42,9 @@ public class UserContextService(IHttpContextAccessor httpContextAccessor): IUser
         // Log missing claims (for debugging)
         if (string.IsNullOrWhiteSpace(email)) Log.Error("Email claim is null.");
         if (string.IsNullOrWhiteSpace(userId)) Log.Error("UserId claim is null.");
-        if (string.IsNullOrWhiteSpace(secondaryIssuerId)) Log.Error("BranchId claim is null.");
-        if (string.IsNullOrWhiteSpace(roleId)) Log.Error("RoleId claim is null.");
+        //if (string.IsNullOrWhiteSpace(secondaryIssuerId)) Log.Error("BranchId claim is null.");
+        //if (string.IsNullOrWhiteSpace(roleId)) Log.Error("RoleId claim is null.");
 
-        return new CurrentUser(secondaryIssuerId, userId, email, role, roleId, username, firstName, lastName);
+        return new CurrentUser(userType, userId, email, firstName, lastName);
     }
 }

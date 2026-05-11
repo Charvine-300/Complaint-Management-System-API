@@ -10,10 +10,11 @@ using ZenlyAPI.Domain.Entities.Shared;
 using ZenlyAPI.Domain.Utilities;
 using ZenlyAPI.Services.ComplaintsTrailMgmt;
 using ZenlyAPI.Services.Shared;
+using ZenlyAPI.Services.Shared.UserContextService;
 
 namespace ZenlyAPI.Services.ComplaintsMgmt;
 
-public class ComplaintsService(ZenlyDbContext database, IComplaintsTrailService trailService, ZenlyConfig zenlyConfig, IConfiguration configuration): IComplaintsService
+public class ComplaintsService(ZenlyDbContext database, IComplaintsTrailService trailService, ZenlyConfig zenlyConfig, IConfiguration configuration, IUserContextService userContextService): IComplaintsService
 {
     private readonly Cloudinary _cloudinary =
       new Cloudinary(
@@ -172,8 +173,8 @@ public class ComplaintsService(ZenlyDbContext database, IComplaintsTrailService 
                 Description = request.Description,
                 CourseId = request.CourseId,
                 Status = ComplaintStatus.Pending,
-                CreatedAt = DateTimeOffset.UtcNow
-                //TODO - Add CreatedBy content here
+                CreatedAt = DateTimeOffset.UtcNow,
+                CreatedBy = userContextService.User.Id,
             };
 
 
@@ -195,13 +196,13 @@ public class ComplaintsService(ZenlyDbContext database, IComplaintsTrailService 
             await database.ComplaintUploads.AddRangeAsync(logComplaint.Documents, cancellationToken);
             await database.SaveChangesAsync(cancellationToken);
 
-            // Record complaint hsitory
+            // Record complaint history
             ComplaintsTrailRequest complaintHistory = new()
             {
                 ComplaintId = logComplaint.Id,
                 Action = "Create Complaint",
                 Comment = $"Complaint logged for course {courseDetails.Code} - {courseDetails.Name}",
-                Actor = "Student", //TODO - Add actual actor content here
+                Actor = $"{userContextService.User.FirstName} {userContextService.User.LastName}",
                 ActionType = ComplaintActionType.Create
             };
 
@@ -241,7 +242,7 @@ public class ComplaintsService(ZenlyDbContext database, IComplaintsTrailService 
             complaintDetails.Description = request.Description;
             complaintDetails.CourseId = request.CourseId;
             complaintDetails.ModifiedAt = DateTimeOffset.UtcNow;
-            //TODO - Add ModifiedBy content here
+            complaintDetails.ModifiedBy = userContextService.User.Id;
 
             await database.SaveChangesAsync(cancellationToken);
 
@@ -251,7 +252,7 @@ public class ComplaintsService(ZenlyDbContext database, IComplaintsTrailService 
                 ComplaintId = id,
                 Action = "Update Complaint",
                 Comment = $"Details of this complaint were edited",
-                Actor = "Student", //TODO - Add actual actor content here
+                Actor = $"{userContextService.User.FirstName} {userContextService.User.LastName}",
                 ActionType = ComplaintActionType.Update
             };
 
@@ -279,7 +280,7 @@ public class ComplaintsService(ZenlyDbContext database, IComplaintsTrailService 
 
         complaintDetails.Status = request.Status;
         complaintDetails.ModifiedAt = DateTimeOffset.UtcNow;
-        //TODO - Add ModifiedBy content here
+        complaintDetails.ModifiedBy = userContextService.User.Id;
 
         await database.SaveChangesAsync(cancellationToken);
 
@@ -322,7 +323,7 @@ public class ComplaintsService(ZenlyDbContext database, IComplaintsTrailService 
             ComplaintId = id,
             Action = $"{action.Title}",
             Comment = $"{action.Description}",
-            Actor = "Student/Lecturer", //TODO - Add actual actor content here
+            Actor = $"{userContextService.User.FirstName} {userContextService.User.LastName}",
             ActionType = ComplaintActionType.Update
         };
 

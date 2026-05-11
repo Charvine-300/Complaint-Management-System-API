@@ -1,4 +1,5 @@
 ﻿using ZenlyAPI.Domain.Entities.Shared;
+using ZenlyAPI.Domain.User.Students;
 
 namespace ZenlyAPI.Domain.Entities;
 

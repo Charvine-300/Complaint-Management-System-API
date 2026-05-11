@@ -19,6 +19,13 @@ public enum ComplaintStatus
     Canceled = 4,
 }
 
+public enum UserType
+{
+    Student,
+    Lecturer,
+    SuperAdmin
+}
+
 public enum ComplaintType
 {
     AssessmentsAndExams = 1,
