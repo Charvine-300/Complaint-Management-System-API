@@ -2,7 +2,6 @@
 using ZenlyAPI.Controllers.Shared;
 using ZenlyAPI.Domain.Utilities;
 using ZenlyAPI.Services.AuthMgmt;
-using ZenlyAPI.Services.ComplaintsMgmt;
 
 namespace ZenlyAPI.Controllers;
 
@@ -12,20 +11,22 @@ namespace ZenlyAPI.Controllers;
 public class AuthController(IAuthService authService) : BaseController
 {
     /// <summary>
-    /// Log in to account
+    /// Log in to student account
     /// </summary>
     /// <param name="parameters"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    [HttpPost("login/student")]
+    [HttpPost("login")]
     //[HasPermission("trail.read")]
 
     [ProducesResponseType(200, Type = typeof(ApiResponse<LoginResponse>))]
     [ProducesResponseType(400, Type = typeof(ApiResponse))]
     [ProducesResponseType(404, Type = typeof(ApiResponse))]
-    public async Task<IActionResult> Login([FromBody] StudentLoginRequest parameters, CancellationToken cancellationToken)
+    public async Task<IActionResult> Login([FromBody] LoginRequest parameters, CancellationToken cancellationToken)
     {
-        ServiceResponse<LoginResponse> response = await authService.StudentLoginAsync(parameters, cancellationToken);
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        ServiceResponse<LoginResponse> response = await authService.LoginAsync(parameters, cancellationToken);
         return ComputeResponse(response);
     }
 
@@ -43,7 +44,49 @@ public class AuthController(IAuthService authService) : BaseController
     [ProducesResponseType(404, Type = typeof(ApiResponse))]
     public async Task<IActionResult> StudentSignup([FromBody] StudentSignupRequest parameters, CancellationToken cancellationToken)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
         ServiceResponse response = await authService.StudentSignupAsync(parameters, cancellationToken);
+        return ComputeResponse(response);
+    }
+
+    /// <summary>
+    /// Sign up to lecturer account
+    /// </summary>
+    /// <param name="parameters"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpPost("signup/lecturer")]
+    //[HasPermission("trail.read")]
+
+    [ProducesResponseType(200, Type = typeof(ApiResponse))]
+    [ProducesResponseType(400, Type = typeof(ApiResponse))]
+    [ProducesResponseType(404, Type = typeof(ApiResponse))]
+    public async Task<IActionResult> LecturerSignup([FromBody] LecturerSignupRequest parameters, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        ServiceResponse response = await authService.LecturerSignupAsync(parameters, cancellationToken);
+        return ComputeResponse(response);
+    }
+
+    /// <summary>
+    /// Change password of student/lecturer
+    /// </summary>
+    /// <param name="parameters"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpPost("change-password")]
+    //[HasPermission("trail.read")]
+
+    [ProducesResponseType(200, Type = typeof(ApiResponse))]
+    [ProducesResponseType(400, Type = typeof(ApiResponse))]
+    [ProducesResponseType(404, Type = typeof(ApiResponse))]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest parameters, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        ServiceResponse response = await authService.ChangePasswordAsync(parameters, cancellationToken);
         return ComputeResponse(response);
     }
 }

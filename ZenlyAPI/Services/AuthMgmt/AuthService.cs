@@ -1,7 +1,5 @@
-﻿using Castle.Core.Resource;
-using Elastic.Apm.Api;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using System.IdentityModel.Tokens.Jwt;
@@ -13,88 +11,112 @@ using ZenlyAPI.Context;
 using ZenlyAPI.Domain.Config;
 using ZenlyAPI.Domain.Entities.Shared;
 using ZenlyAPI.Domain.User;
+using ZenlyAPI.Domain.User.Lecturers;
 using ZenlyAPI.Domain.User.Students;
 using ZenlyAPI.Domain.Utilities;
+using ZenlyAPI.Extensions;
 using ZenlyAPI.Services.Shared.Security;
+using ZenlyAPI.Services.Shared.UserContextService;
 using Response = ZenlyAPI.Services.Shared.Response;
 
 namespace ZenlyAPI.Services.AuthMgmt;
 
-public class AuthService(ZenlyDbContext database, ZenlyConfig zenlyConfig) : IAuthService
+public class AuthService(ZenlyDbContext database, ZenlyConfig zenlyConfig, IUserContextService userContextService) : IAuthService
 {
     private readonly int RefreshTokenValidity = 7;
-    public async Task<ServiceResponse<LoginResponse>> StudentLoginAsync(StudentLoginRequest request, CancellationToken cancellationToken)
+    public async Task<ServiceResponse<LoginResponse>> LoginAsync(
+        LoginRequest request,
+        CancellationToken cancellationToken)
     {
         try
         {
-
             string email = request.Email.Trim();
             string password = request.Password.Trim();
 
-            Student? student = await database.Students.AsNoTracking().FirstOrDefaultAsync(b => b.Email == email, cancellationToken);
+            BaseUser? user = null;
 
-            if (student is null)
+            if (request.UserType == UserType.Student)
             {
-                return Response.Unauthorized<LoginResponse>("Invalid login credentials", null!);
+                user = await database.Students
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        x => x.Email == email && x.Type == UserType.Student,
+                        cancellationToken);
+            }
+            else if (request.UserType == UserType.Lecturer)
+            {
+                user = await database.Lecturers
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        x => x.Email == email && x.Type == UserType.Lecturer,
+                        cancellationToken);
             }
 
-            bool isCorrectPassword = BCryptHash.Verify(student?.Password!, password);
+            if (user is null)
+            {
+                return Response.Unauthorized<LoginResponse>(
+                    "Invalid login credentials",
+                    null!);
+            }
+
+            bool isCorrectPassword = BCryptHash.Verify(user.Password!, password);
+
             if (!isCorrectPassword)
             {
-                return Response.BadRequest<LoginResponse>("Incorrect email address or password", null!);
+                return Response.BadRequest<LoginResponse>(
+                    "Incorrect email address or password",
+                    null!);
             }
 
-            //string[] userRoles = student.Roles.Select(x => x.Role.Name).ToArray();
-            //string roles = string.Join(",", userRoles);
-
-            LoginResponse result = await CreateAccessTokenAsync(student, true, cancellationToken);
+            LoginResponse result = await CreateAccessTokenAsync(
+                user,
+                true,
+                cancellationToken);
 
             return Response.Success("Login successful.", result);
         }
         catch (Exception ex)
         {
             Log.Logger.Error(ex, ex.Message);
-            return Response.SystemMalfunction<LoginResponse>("Login failed. It is not you, it's us. Please try again or contact support.", null!);
+
+            return Response.SystemMalfunction<LoginResponse>(
+                "Login failed. It is not you, it's us. Please try again or contact support.",
+                null!);
         }
     }
+
     public async Task<ServiceResponse> StudentSignupAsync(StudentSignupRequest request, CancellationToken cancellationToken)
     {
-        // Check if first and last name pairing exists
-        bool nameExists = false;
-        if (request.UserType == Domain.Entities.Shared.UserType.Student)
+        try
         {
-            nameExists = await database.Students.AsNoTracking().AnyAsync(s => s.FirstName.ToLower() == request.FirstName.ToLower() && s.LastName.ToLower() == request.LastName.ToLower(), cancellationToken);
-        } 
-        //else if (request.UserType == Domain.Entities.Shared.UserType.Lecturer)
-        //{
-        //    nameExists = await database.Lecturers.AsNoTracking().AnyAsync(l => l.FirstName.ToLower() == request.FirstName.ToLower() && l.LastName.ToLower() == request.LastName.ToLower(), cancellationToken);
-        //}
+            // Check if first and last name pairing exists
+            bool nameExists = false;
+            if (request.UserType == UserType.Student)
+            {
+                nameExists = await database.Students.AsNoTracking().AnyAsync(s => s.FirstName.ToLower() == request.FirstName.ToLower() && s.LastName.ToLower() == request.LastName.ToLower(), cancellationToken);
+            }
 
-        if (nameExists)
-        {
-            return Response.Conflict("A user with this first and last name already exists");
-        }
+            if (nameExists)
+            {
+                return Response.Conflict("A student with this first and last name already exists");
+            }
 
-        bool emailExists = false;
-        if (request.UserType == Domain.Entities.Shared.UserType.Student)
-        {
-            emailExists = await database.Students.AsNoTracking().AnyAsync(s => s.Email.ToLower() == request.Email.ToLower(), cancellationToken);
-        }
-        //else if (request.UserType == Domain.Entities.Shared.UserType.Lecturer)
-        //{
-        //    nameExists = await database.Lecturers.AsNoTracking().AnyAsync(l => l.Email.ToLower() == request.Email.ToLower(), cancellationToken);
-        //}
+            bool emailExists = false;
+            if (request.UserType == UserType.Student)
+            {
+                emailExists = await database.Students.AsNoTracking().AnyAsync(s => s.Email.ToLower() == request.Email.ToLower(), cancellationToken);
+            }
 
-        if (emailExists)
-        {
-            return Response.Conflict("A user with this email already exists");
-        }
-      
+            if (emailExists)
+            {
+                return Response.Conflict("A student with this email already exists");
+            }
+
             bool matricNoExists = await database.Students.AsNoTracking().AnyAsync(s => s.MatricNo == request.MatricNo, cancellationToken);
 
             if (matricNoExists)
             {
-                return Response.Conflict("A user with this matric number already exists");
+                return Response.Conflict("A student with this matric number already exists");
             }
 
             bool facultyExists = await database.Faculties.AsNoTracking().AnyAsync(f => f.Id == request.FacultyId, cancellationToken);
@@ -104,17 +126,18 @@ public class AuthService(ZenlyDbContext database, ZenlyConfig zenlyConfig) : IAu
             }
 
             bool departmentExists = await database.Departments.AsNoTracking().AnyAsync(d => d.Id == request.DepartmentId, cancellationToken);
-        if (!departmentExists) 
-        {
-            return Response.NotFound("The specified department does not exist");
-        }
+            if (!departmentExists)
+            {
+                return Response.NotFound("The specified department does not exist");
+            }
 
-        Student student = new()
+            Student student = new()
             {
                 Id = Guid.NewGuid(),
                 FirstName = request.FirstName,
                 LastName = request.LastName,
                 UserName = request.Username,
+                Type = UserType.Student,
                 Email = request.Email,
                 MatricNo = request.MatricNo,
                 FacultyId = request.FacultyId,
@@ -122,25 +145,90 @@ public class AuthService(ZenlyDbContext database, ZenlyConfig zenlyConfig) : IAu
                 Password = BCryptHash.Hash(request.Password)
             };
 
-        await database.Students.AddAsync(student, cancellationToken);
+            await database.Students.AddAsync(student, cancellationToken);
 
-        // Adding courses
-        var studentCourses = request.Courses.Select(course => new StudentCourse
+            // Adding courses
+            var studentCourses = request.Courses.Select(course => new StudentCourse
+            {
+                StudentId = student.Id,
+                CourseId = course
+            }).ToList();
+
+            // TODO - Email notification to student about successful registration
+            database.Students_Courses.AddRange(studentCourses);
+            await database.SaveChangesAsync(cancellationToken);
+
+            return Response.Created("Student registered successfully");
+        }
+        catch (Exception ex)
         {
-            StudentId = student.Id,
-            CourseId = course
-        }).ToList();
-
-
-        database.Students_Courses.AddRange(studentCourses);
-        await database.SaveChangesAsync(cancellationToken);
-
-        return Response.Success("Student registered successfully");
+            Log.Logger.Error(ex, ex.Message);
+            return Response.SystemMalfunction("Login failed. It is not you, it's us. Please try again or contact support.");
+        }
     }
 
-    Task<ServiceResponse> IAuthService.LogoutAsync(string refreshToken, CancellationToken cancellationToken)
+    public async Task<ServiceResponse> LecturerSignupAsync(LecturerSignupRequest request, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        try
+        {
+            bool nameExists = false;
+            if (request.UserType == UserType.Lecturer)
+            {
+                nameExists = await database.Lecturers.AsNoTracking().AnyAsync(l => l.FirstName.ToLower() == request.FirstName.ToLower() && l.LastName.ToLower() == request.LastName.ToLower(), cancellationToken);
+            }
+
+            if (nameExists)
+            {
+                return Response.Conflict("A lecturer with this first and last name already exists");
+            }
+
+            bool emailExists = false;
+            if (request.UserType == UserType.Lecturer)
+            {
+                nameExists = await database.Lecturers.AsNoTracking().AnyAsync(l => l.Email.ToLower() == request.Email.ToLower(), cancellationToken);
+            }
+
+            if (emailExists)
+            {
+                return Response.Conflict("A lecturer with this email already exists");
+            }
+
+            bool facultyExists = await database.Faculties.AsNoTracking().AnyAsync(f => f.Id == request.FacultyId, cancellationToken);
+            if (!facultyExists)
+            {
+                return Response.NotFound("The specified faculty does not exist");
+            }
+
+            bool departmentExists = await database.Departments.AsNoTracking().AnyAsync(d => d.Id == request.DepartmentId, cancellationToken);
+            if (!departmentExists)
+            {
+                return Response.NotFound("The specified department does not exist");
+            }
+
+
+            Lecturer lecturer = new()
+            {
+                Id = Guid.NewGuid(),
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                UserName = request.Username,
+                Email = request.Email,
+                Type = UserType.Lecturer,
+                FacultyId = request.FacultyId,
+                DepartmentId = request.DepartmentId,
+                Password = BCryptHash.Hash(request.Password)
+            };
+
+            await database.Lecturers.AddAsync(lecturer, cancellationToken);
+            await database.SaveChangesAsync(cancellationToken);
+
+            return Response.Created("Lecturer registered successfully");
+        }
+        catch (Exception ex)
+        {
+            Log.Logger.Error(ex, ex.Message);
+            return Response.SystemMalfunction("Login failed. It is not you, it's us. Please try again or contact support.");
+        }
     }
 
     Task<ServiceResponse<LoginResponse>> IAuthService.RefreshTokenAsync(string refreshToken, CancellationToken cancellationToken)
@@ -278,6 +366,42 @@ public class AuthService(ZenlyDbContext database, ZenlyConfig zenlyConfig) : IAu
         }
     }
 
+    public async Task<ServiceResponse> ChangePasswordAsync(ChangePasswordRequest request, CancellationToken cancellationToken)
+    {
+        BaseUser? userDetails = null;
+        if (request.UserType == UserType.Student)
+        {
+            userDetails = await database.Students.FirstOrDefaultAsync(x => x.Id.ToString() == userContextService.User.Id && x.Type == UserType.Student, cancellationToken);
+        }
+        else if (request.UserType == UserType.Lecturer)
+        {
+            userDetails = await database.Lecturers.FirstOrDefaultAsync(x => x.Id.ToString() == userContextService.User.Id && x.Type == UserType.Lecturer, cancellationToken);
+        }
+
+            if (userDetails is null)
+            {
+                return Response.NotFound("User does not exist");
+            }
 
 
+
+        bool isValidPin = request.OldPassword.Verify(userDetails.Password!);
+        if (!isValidPin)
+        {
+            return Response.BadRequest("Your current password does not match.");
+        }
+
+        bool isNotNewPassword = request.NewPassword.Verify(userDetails.Password);
+        if (isNotNewPassword)
+        {
+            return Response.BadRequest("You cannot use your old password.");
+        }
+
+        userDetails.ModifiedAt = DateTimeOffset.UtcNow;
+        userDetails.ModifiedBy = userContextService.User.Id;
+        userDetails.Password = request.NewPassword.Hash();
+
+        await database.SaveChangesAsync(cancellationToken);
+        return Response.Success("Password updated successfully");
+    }
 }

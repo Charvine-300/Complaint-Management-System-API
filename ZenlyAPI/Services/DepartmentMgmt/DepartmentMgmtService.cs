@@ -4,12 +4,12 @@ using ZenlyAPI.Context;
 using ZenlyAPI.Domain.Entities;
 using ZenlyAPI.Domain.Utilities;
 using ZenlyAPI.Services.CourseMgmt;
-using ZenlyAPI.Services.FacultyMgmt;
 using ZenlyAPI.Services.Shared;
+using ZenlyAPI.Services.Shared.UserContextService;
 
 namespace ZenlyAPI.Services.DepartmentMgmt;
 
-public class DepartmentMgmtService(ZenlyDbContext database) : IDepartmentMgmtService
+public class DepartmentMgmtService(ZenlyDbContext database, IUserContextService userContextService) : IDepartmentMgmtService
 {
     public async Task<ServiceResponse<PaginationResponse<AllDepartmentsResponse>>> GetDepartmentsAsync(DepartmentParameters parameters, CancellationToken cancellationToken)
     {
@@ -124,8 +124,8 @@ public class DepartmentMgmtService(ZenlyDbContext database) : IDepartmentMgmtSer
             {
                 Name = request.Name,
                 FacultyId = request.FacultyId,
-                CreatedAt = DateTimeOffset.UtcNow
-                //TODO - Add CreatedBy content here
+                CreatedAt = DateTimeOffset.UtcNow,
+                CreatedBy = userContextService.User.Id
             };
 
             database.Departments.Add(newDepartment);
@@ -162,7 +162,7 @@ public class DepartmentMgmtService(ZenlyDbContext database) : IDepartmentMgmtSer
             department.Name = request.Name;
             department.FacultyId = request.FacultyId;
             department.ModifiedAt = DateTimeOffset.UtcNow;
-            //TODO - Add ModifiedBy content here
+            department.ModifiedBy = userContextService.User.Id;
 
             await database.SaveChangesAsync(cancellationToken);
 

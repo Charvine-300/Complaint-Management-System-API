@@ -4,11 +4,12 @@ using ZenlyAPI.Domain.Entities;
 using ZenlyAPI.Domain.Utilities;
 using ZenlyAPI.Services.Shared;
 using Serilog;
+using ZenlyAPI.Services.Shared.UserContextService;
 
 
 namespace ZenlyAPI.Services.CourseMgmt;
 
-public class CourseMgmtService(ZenlyDbContext database) : ICourseMgmtService
+public class CourseMgmtService(ZenlyDbContext database, IUserContextService userContextService) : ICourseMgmtService
 {
     public async Task<ServiceResponse<PaginationResponse<AllCoursesResponse>>> GetCoursesAsync(CourseParameters parameters, CancellationToken cancellationToken)
     {
@@ -147,7 +148,7 @@ public class CourseMgmtService(ZenlyDbContext database) : ICourseMgmtService
                 Type = request.Type,
                 DepartmentId = request.DepartmentId,
                 CreatedAt = DateTimeOffset.UtcNow,
-                //TODO - Add CreatedBy content here
+                CreatedBy = userContextService.User.Id,
             };
 
 
@@ -202,7 +203,7 @@ public class CourseMgmtService(ZenlyDbContext database) : ICourseMgmtService
             course.Code = request.Code;
             course.Type = request.Type;
             course.ModifiedAt = DateTimeOffset.UtcNow;
-            //TODO - Add ModifiedBy content here
+            course.ModifiedBy = userContextService.User.Id;
 
             await database.SaveChangesAsync(cancellationToken);
 
@@ -226,8 +227,8 @@ public class CourseMgmtService(ZenlyDbContext database) : ICourseMgmtService
 
         course.Type = request.Type;
         course.ModifiedAt = DateTimeOffset.UtcNow;
-        //TODO - Add ModifiedBy content here
-    
+        course.ModifiedBy= userContextService.User.Id;
+
         await database.SaveChangesAsync(cancellationToken);
     
         return Response.Success("Course type updated successfully");
